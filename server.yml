@@ -1,15 +1,24 @@
 ---
-- name: "WordPress Server: Install LEMP Stack with PHP 5.6 and MariaDB MySQL"
+- name: Determine Remote User
   hosts: web
-  remote_user: root
+  gather_facts: false
+  roles:
+    - { role: remote-user, tags: [remote-user, always] }
 
+- name: WordPress Server - Install LEMP Stack with PHP 5.6 and MariaDB MySQL
+  hosts: web
+  sudo: yes
+  vars_files:
+    - vars/sudoer_passwords.yml
   roles:
     - { role: common, tags: [common] }
+    - { role: swapfile, swapfile_size: 1GB, tags: [swapfile] }
     - { role: fail2ban, tags: [fail2ban] }
     - { role: ferm, tags: [ferm] }
     - { role: ntp }
     - { role: users, tags: [users] }
-    - { role: mariadb, tags: [mariadb] }
+    - { role: sshd, tags: [sshd] }
+    - { role: mariadb, tags: [mariadb], when: not mysql_remote_database }
     - { role: ssmtp, tags: [ssmtp mail] }
     - { role: php, when: not hhvm, tags: [php] }
     - { role: hhvm, when: hhvm, tags: [hhvm] }
@@ -18,5 +27,4 @@
     - { role: memcached, tags: [memcached] }
     - { role: composer, tags: [composer] }
     - { role: wp-cli, tags: [wp-cli] }
-    - { role: github-ssh-keys, tags: [github-ssh-keys], when: github_ssh_keys is defined }
     - { role: wordpress-setup, tags: [wordpress, wordpress-setup] }

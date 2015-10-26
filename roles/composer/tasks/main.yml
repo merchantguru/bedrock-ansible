@@ -6,4 +6,13 @@
   apt: name=php5-composer state=present force=yes
 
 - name: Composer self update
-  shell: composer self-update
+  command: composer self-update
+  register: composer_update_result
+  changed_when: composer_update_result | success and 'already using composer version' not in composer_update_result.stderr
+
+- name: add Composer vendor binary path
+  lineinfile:
+    dest: /etc/environment
+    regexp: ^PATH="(((?!:./vendor/bin).)*)"
+    line: PATH="\1:./vendor/bin"
+    backrefs: yes
